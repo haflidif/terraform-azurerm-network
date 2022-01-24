@@ -1,0 +1,8 @@
+.terraform
+*.suo
+*.sqlite
+*.plan
+local*.tfvars
+.terraform.lock.hcl
+backend.hcl
+.local

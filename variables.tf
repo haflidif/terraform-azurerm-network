@@ -5,7 +5,7 @@ variable "resource_group_name" {
 
 variable "location" {
   type        = string
-  description = "Region"
+  description = "Region / Location"
 }
 
 variable "vnet_name" {
@@ -37,7 +37,6 @@ variable "ddos_plan_name" {
 }
 
 variable "subnets" {
-  type        = map(any)
   description = "A block to define one or more subnets within the module."
   default     = {}
 }

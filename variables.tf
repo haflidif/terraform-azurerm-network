@@ -24,16 +24,15 @@ variable "dns_servers" {
   default     = []
 }
 
-variable "ddos_plan" {
-  type        = bool
-  description = "A boolean to define if the Virtual Network should have DDos Plan Available"
-  default     = false
-}
-
-variable "ddos_plan_name" {
-  type        = string
-  description = "DDos Plan Name"
-  default     = "AzureDdosPlan1"
+variable "ddos_protection_plan" {
+  description = "Configures DDos Protection Plan on the Virtual Network"
+  type = set(object(
+    {
+      ddos_protection_plan_id     = string
+      enable_ddos_protection_plan = bool
+    }
+  ))
+  default = []
 }
 
 variable "subnets" {

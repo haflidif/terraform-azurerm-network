@@ -8,31 +8,23 @@ resource "azurerm_virtual_network" "vnet" {
   tags                = var.tags
 
   dynamic "ddos_protection_plan" {
-    for_each = var.ddos_plan == true ? [1] : [0]
+    for_each = var.ddos_protection_plan
 
     content {
-      id     = azurerm_network_ddos_protection_plan.ddos[0].id
-      enable = true
+      id     = ddos_protection_plan.value["ddos_protection_plan_id"]
+      enable = ddos_protection_plan.value["enable_ddos_protection_plan"]
     }
   }
 }
 
-# Creating ddos protection plan if var.ddos_plan is true, default is false
-resource "azurerm_network_ddos_protection_plan" "ddos" {
-  count               = var.ddos_plan ? 1 : 0
-  name                = var.ddos_plan_name
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  tags                = var.tags
-}
 
 # Creating Subnets
 resource "azurerm_subnet" "subnet" {
   for_each                                       = var.subnets
-  name                                           = each.value.subnet_name
+  name                                           = lookup(each.value, "subnet_name", lower("snet-${each.key}"))
   resource_group_name                            = var.resource_group_name
   virtual_network_name                           = azurerm_virtual_network.vnet.name
-  address_prefixes                               = each.value.subnet_address_prefix
+  address_prefixes                               = each.value.subnet_address_prefixes
   service_endpoints                              = lookup(each.value, "service_endpoints", [])
   enforce_private_link_endpoint_network_policies = lookup(each.value, "enforce_private_link_endpoint_network_policies", null)
   enforce_private_link_service_network_policies  = lookup(each.value, "enforce_private_link_service_network_policies", null)
@@ -60,7 +52,8 @@ resource "azurerm_network_security_group" "nsg" {
     if lookup(var.subnets[k], "nsg", "false")
   }
 
-  name                = lookup(each.value, "nsg_name", lower("nsg-${each.key}"))
+  # Name can be overwritten with nsg_name or using the subnet name minus snet-
+  name                = lookup(each.value, "nsg_name", lower("nsg-${trimprefix(azurerm_subnet.subnet["${each.key}"].name, "snet-")}"))
   resource_group_name = var.resource_group_name
   location            = var.location
   tags                = var.tags
@@ -84,8 +77,21 @@ resource "azurerm_network_security_group" "nsg" {
       destination_address_prefixes               = try(security_rule.value.destination_address_prefixes, null)
       source_application_security_group_ids      = try(security_rule.value.source_application_security_group_ids, null)
       destination_application_security_group_ids = try(security_rule.value.destination_application_security_group_ids, null)
+      description                                = try(security_rule.value.description, null)
     }
   }
+}
+
+# Associating Network Security group with the subnet based on NSG creation.
+resource "azurerm_subnet_network_security_group_association" "nsg" {
+  for_each = {
+    for k in keys(var.subnets) :
+    k => var.subnets[k]
+    if lookup(var.subnets[k], "nsg", "false")
+  }
+
+  network_security_group_id = azurerm_network_security_group.nsg["${each.key}"].id
+  subnet_id                 = azurerm_subnet.subnet["${each.key}"].id
 }
 
 # Creating Route Table based on input from route_table attribute in each subnet
@@ -97,7 +103,8 @@ resource "azurerm_route_table" "rt" {
     k => var.subnets[k]
     if lookup(var.subnets[k], "route_table", "false")
   }
-  name                          = lookup(each.value, "route_table_name", lower("rt-${each.key}"))
+  # Name can be overwritten with route_table_name or using the subnet name minus snet-
+  name                          = lookup(each.value, "route_table_name", lower("rt-${trimprefix(azurerm_subnet.subnet["${each.key}"].name, "snet-")}"))
   resource_group_name           = var.resource_group_name
   location                      = var.location
   tags                          = var.tags
@@ -113,4 +120,16 @@ resource "azurerm_route_table" "rt" {
       next_hop_in_ip_address = route.value.next_hop_type == "VirtualAppliance" ? route.value.next_hop_in_ip_address : null
     }
   }
+}
+
+# Associating RouteTable with the subnet based on RouteTable creation.
+resource "azurerm_subnet_route_table_association" "rt" {
+  for_each = {
+    for k in keys(var.subnets) :
+    k => var.subnets[k]
+    if lookup(var.subnets[k], "route_table", "false")
+  }
+
+  route_table_id = azurerm_route_table.rt["${each.key}"].id
+  subnet_id      = azurerm_subnet.subnet["${each.key}"].id
 }

@@ -71,7 +71,7 @@ module "shared_network" {
     
   # (Optional: Attaching DDoS Plan to virtual network) - by default DDoS Protection plan is not attached.
   ddos_protection_plan = [{
-    ddos_protection_plan_id = azurerm_network_ddos_protection_plan.ddos.id
+    ddos_protection_plan_id = azurerm_network_ddos_protection_plan.westeu.id
     enable                  = true 
   }]
 
@@ -424,8 +424,7 @@ module "shared_network" {
 }
 ```
 
-### `nsg_inbound_rules` & `nsg_outbound_rules`
-#### Inputs
+### Inputs for NSG inbound and outbound rules.
 
 Name | Description | Type | Sample Input
 ---- | ----------- | ---- | -------
@@ -662,8 +661,8 @@ Name | Description | Type | Default
 `service_endpoints` | (Optional) Service endpoints for the virtual subnet| object | `{}`
 `nsg` | (Optional) Controls if an NSG should be created and attached to the subnet - NSG is __not__ created by default for each subnet | bool | `false`
 `nsg_name` | (Optional) Overwrites the use of subnet name minus `snet-` | string | "nsg-(Uses the __subnet name__ *minus `snet-` if present*)"
-`nsg_inbound_rule` | (Optional) Define custom NSG inbound rules settings as described [here](#nsginboundrules--nsgoutboundrules) | object | `{}`
-`nsg_outbound_rule` | (Optional) Define custom NSG outbound rules settings as described [here](#nsginboundrules--nsgoutboundrules) | object | `{}`
+`nsg_inbound_rule` | (Optional) Define custom NSG inbound rules settings as described [here](#inputs-for-nsg-inbound-and-outbound-rules) | object | `{}`
+`nsg_outbound_rule` | (Optional) Define custom NSG outbound rules settings as described [here](#inputs-for-nsg-inbound-and-outbound-rules) | object | `{}`
 `route_table` | (Optional) Controls if an Route Table should be created and attached to the subnet - RouteTable is __not__ created by default for each subnet | bool | `false`
 `route_table_name` | (Optional) Overwrites the use of subnet name minus `snet-` | string | "rt-(Uses the __subnet name__ *minus `snet-` if present*)"
 `routes` | (Optional) Define User Defined routes (UDR) for the route table as described [here](#route-table--routes) | object | `{}`

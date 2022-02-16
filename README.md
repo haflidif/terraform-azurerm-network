@@ -11,8 +11,8 @@ Type of resources that are supported within the module:
 * [Private Link service / endpoint network policies for subnets](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet#enforce_private_link_endpoint_network_policies)
 * [Network Security Groups (NSG)](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group)
 * [Route Tables](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/route_table)
-* [Test sample code Complete](test/complete/main.tf)
-* [Tets sample code Simple](test/simple/main.tf)
+* [Test sample code Complete](test/complete/)
+* [Tets sample code Simple](test/simple/)
 
 ---
 

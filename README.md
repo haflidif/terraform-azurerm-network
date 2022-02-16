@@ -45,10 +45,14 @@ resource "azurerm_resource_group" "shared_network_hub" {
 # Creating ddos protection plan if var.ddos_plan is true, default is false
 resource "azurerm_network_ddos_protection_plan" "westeu" {
   name                = "ddos-westeurope"
-  resource_group_name = azurerm_resource_group.test.name
+  resource_group_name = azurerm_resource_group.shared_network_hub.name
   location            = "westeurope"
   tags = {
-    "Environment" = "Test"
+    ProjectName  = "test-shared-hub"
+    Environment  = "test"
+    Owner        = "user@corp.com"
+    BusinessUnit = "IT-CORP"
+    CostCenter   = "TestUnit"
   }
 }
 
@@ -59,7 +63,7 @@ module "shared_network" {
 
   # By default, this module does not create a resource group, provide the resource group name here
 
-  resource_group_name = "rg-shared-network-westeurope-001"
+  resource_group_name = azurerm_resource_group.shared_network_hub.name
   location            = "westeurope"
   vnet_name           = "vnet-shared-hub-westeurope-001"
   vnet_address_space  = ["10.0.0.0/23"]

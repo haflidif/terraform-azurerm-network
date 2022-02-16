@@ -1,6 +1,4 @@
 .terraform
-*.suo
-*.sqlite
 *.plan
 local*.tfvars
 .terraform.lock.hcl

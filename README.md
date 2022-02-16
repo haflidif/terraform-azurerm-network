@@ -491,50 +491,65 @@ Service Class|Service Level Agreement level of this application, workload, or se
 Start Date of the project|Date when this application, workload, or service was first deployed.|StartDate|{date}|No
 End Date of the Project|Date when this application, workload, or service is planned to be retired.|EndDate|{date}|No
 
-> *__Note:__ This module allows you to manage the above metadata tags directly,as a variable using `variables.tf` or even merge it with tags from `local.tf` All Azure resources which support tagging can be tagged by specifying key-values in argument `tags`.*
+> *__Note:__ This module allows you to manage the above metadata tags directly, as a variable using `variables.tf` and `.tfvars` files as well as merge it with tags from `local` All Azure resources which support tagging can be tagged by specifying key-values in argument `tags`.*
 
 #### Directly 
 ```hcl
-module "shared_network" {
-  source  = "haflidif/terraform-azurerm-network"
-  version = "1.0.0"
+main.tf
 
-  #..omitted
+  module "shared_network" {
+    source  = "haflidif/terraform-azurerm-network"
+    version = "1.0.0"
 
+    #..omitted
+
+    tags = {
+      ProjectName  = "Platform-Demo"
+      Environment  = "dev"
+      Owner        = "user@corp.com"
+      BusinessUnit = "CORP"
+      CostCenter   = "IT"
+      ServiceClass = "Dev"
+    }
+
+    #..omitted
+  }
+```
+#### Variable in `variable.tf`
+
+```hcl
+main.tf
+
+  module "shared_network" {
+    source  = "haflidif/terraform-azurerm-network"
+    version = "1.0.0"
+
+    #..omitted
+
+    tags = var.tags
+
+    #..omitted
+  }
+```
+
+```hcl
+variables.tf
+
+  variable "tags" {
+    type        = map(string)
+    description = "(Optional) Resource tagging"
+    default     = {}
+  }
+```
+```hcl
+
+dev.tfvars
   tags = {
     ProjectName  = "Platform-Demo"
     Environment  = "dev"
     Owner        = "user@corp.com"
-    BusinessUnit = "CORP"
-    CostCenter   = "IT"
     ServiceClass = "Dev"
   }
-
-  #..omitted
-}
-```
-#### Variable in `variable.tf`
-
-`main.tf`
-```hcl
-module "shared_network" {
-  source  = "haflidif/terraform-azurerm-network"
-  version = "1.0.0"
-
-  #..omitted
-
-  tags = var.tags
-
-  #..omitted
-}
-```
-`variables.tf`
-```hcl
-variable "tags" {
-  type        = map(string)
-  description = "(Optional) Resource tagging"
-  default     = {}
-}
 ```
 
 #### With `local` and `variable.tf`
@@ -564,12 +579,24 @@ main.tf
 ```
 ```hcl
 variables.tf
+
   variable "tags" {
     type        = map(string)
     description = "(Optional) Resource tagging"
     default     = {}
   }
 ```
+```hcl
+
+dev.tfvars
+  tags = {
+    ProjectName  = "Platform-Demo"
+    Environment  = "dev"
+    Owner        = "user@corp.com"
+    ServiceClass = "Dev"
+  }
+```
+
 ---
 
 ## Requirements
@@ -594,23 +621,23 @@ Name | Description | Type | Default
 `location`|The location of the resource group in which resources are created| string | `""`
 `vnet_name`|The name of the virtual network| string | `""`
 `vnet_address_space`|Virtual Network address space to be used |list | `[]`
-`dns_servers` | (Optional) List of DNS servers to use for virtual network | list | `[]`
-`ddos_protection_plan` | (Optional) If DDoS protection plan should be attatched to the virtual network | object | `[]`
-`ddos_protection_plan_id` | (Optional) Provide DDoS Protection Plan Id within the `ddos_protection_plan` object | string | `""`
-`enable_ddos_protection_plan` | (Optional) Controls wether DDoS Protection Plan is enabled or disabled | bool | `N/A`
-`subnets`| For each subnet, create an object that contain fields| object | `{}`
+`dns_servers` | (Optional) List of DNS servers to use for virtual network as described [here](#custom-dns-servers)  | list | `[]`
+`ddos_protection_plan` | (Optional) If DDoS protection plan should be attatched to the virtual network as described [here](#azure-network-ddos-protection-plan) | object | `[]`
+`ddos_protection_plan_id` | (Optional) Provide DDoS Protection Plan Id within the `ddos_protection_plan` object as described [here](#azure-network-ddos-protection-plan)  | string | `""`
+`enable_ddos_protection_plan` | (Optional) Controls wether DDoS Protection Plan is enabled or disabled as described [here](#azure-network-ddos-protection-plan) | bool | `N/A`
+`subnets`| For each subnet, create an object that contain required keys and attributes as described [here](#subnets) | object | `{}`
 `subnet_name`| A name of subnets inside virtual network| string | "snet-(Uses `each key` in `subnets` object as deafult)"
 `subnet_address_prefix`| A list of subnets address prefixes inside virtual network| `{}`
-`delegation`| (Optional) Defines a subnet delegation feature. takes an object as described in the example |object | `{}`
+`delegation`| (Optional) Defines a subnet delegation feature. takes an object as described [here](#subnet-service-delegation) |object | `{}`
 `service_endpoints` | (Optional) Service endpoints for the virtual subnet| object | `{}`
 `nsg` | (Optional) Controls if an NSG should be created and attached to the subnet - NSG is __not__ created by default for each subnet | bool | `false`
 `nsg_name` | (Optional) Overwrites the use of subnet name minus `snet-` | string | "nsg-(Uses the __subnet name__ *minus `snet-` if present*)"
-`nsg_inbound_rule` | (Optional) Define custom NSG inbound rules settings | object | `{}`
-`nsg_outbound_rule` | (Optional) Define custom NSG outbound rules settings | object | `{}`
+`nsg_inbound_rule` | (Optional) Define custom NSG inbound rules settings as described [here](#network-security-groups) | object | `{}`
+`nsg_outbound_rule` | (Optional) Define custom NSG outbound rules settings as described [here](#network-security-groups) | object | `{}`
 `route_table` | (Optional) Controls if an Route Table should be created and attached to the subnet - RouteTable is __not__ created by default for each subnet | bool | `false`
 `route_table_name` | (Optional) Overwrites the use of subnet name minus `snet-` | string | "rt-(Uses the __subnet name__ *minus `snet-` if present*)"
-`routes` | (Optional) Define User Defined routes (UDR) for the route table | object | `{}`
-`Tags`| A map of tags to add to all resources| map | `{}`
+`routes` | (Optional) Define User Defined routes (UDR) for the route table as described [here](#route-table--routes) | object | `{}`
+`Tags`| A map of tags to add to all resources as described [here](#metadata-tags)| map | `{}`
 
 ## Outputs
 
